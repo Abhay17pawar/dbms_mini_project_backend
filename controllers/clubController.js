@@ -48,6 +48,58 @@ exports.assignClubHead = (req, res) => {
 };
 
 /**
+ * Assigns a teacher as the incharge for a specific club.
+ */
+exports.assignClubIncharge = (req, res) => {
+  const { clubId } = req.params;
+  const { teacher_id } = req.body;
+
+  if (!teacher_id) {
+    return res.status(400).json({ message: "teacher_id is required." });
+  }
+
+  // 1. First, verify that the teacher exists.
+  const checkTeacherQuery = "SELECT id FROM teachers WHERE id = ?";
+  db.query(checkTeacherQuery, [teacher_id], (err, teacherResult) => {
+    if (err) {
+      return res.status(500).json(err);
+    }
+
+    // If no teacher is found, return a 404 error.
+    if (teacherResult.length === 0) {
+      return res.status(404).json({ message: `Teacher with id ${teacher_id} not found.` });
+    }
+
+    // 2. If the teacher exists, proceed with updating the club.
+    const updateClubQuery = `
+      UPDATE clubs 
+      SET incharge_teacher_id = ? 
+      WHERE id = ?
+    `;
+
+    db.query(updateClubQuery, [teacher_id, clubId], (err, updateResult) => {
+      if (err) return res.status(500).json(err);
+      if (updateResult.affectedRows === 0) {
+        return res.status(404).json({ message: `Club with id ${clubId} not found.` });
+      }
+      res.json({ message: `Teacher ${teacher_id} assigned as incharge for club ${clubId}.` });
+    });
+  });
+};
+
+/**
+ * Retrieves the teacher incharge for a specific club.
+ */
+exports.getClubIncharge = (req, res) => {
+  const { clubId } = req.params;
+  const query = "SELECT t.id, t.name, t.email, t.department FROM teachers t JOIN clubs c ON t.id = c.incharge_teacher_id WHERE c.id = ?";
+  db.query(query, [clubId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result[0] || null); // Return the teacher object or null if not found
+  });
+};
+
+/**
  * Retrieves all members with a 'head' role for a specific club.
  */
 exports.getClubHeads = (req, res) => {
