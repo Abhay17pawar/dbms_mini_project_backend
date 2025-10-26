@@ -58,3 +58,49 @@ exports.getClubHeads = (req, res) => {
     res.json(result);
   });
 };
+
+/**
+ * Retrieves all events for a specific club.
+ */
+exports.getEventsForClub = (req, res) => {
+  const { clubId } = req.params;
+  const query = "SELECT * FROM events WHERE club_id = ?";
+
+  db.query(query, [clubId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+};
+
+/**
+ * Retrieves the budget for a specific club by summing budgets of its events.
+ */
+exports.getClubBudget = (req, res) => {
+  const { clubId } = req.params;
+  // This query joins budgets with events to find all budget entries
+  // for events belonging to the specified club.
+  const query = `
+    SELECT b.*, e.title as event_title
+    FROM budgets b
+    JOIN events e ON b.event_id = e.id
+    WHERE e.club_id = ?
+  `;
+
+  db.query(query, [clubId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+};
+
+/**
+ * Retrieves all activities for a specific club.
+ */
+exports.getActivitiesForClub = (req, res) => {
+  const { clubId } = req.params;
+  const query = "SELECT * FROM activities WHERE club_id = ?";
+
+  db.query(query, [clubId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+};
