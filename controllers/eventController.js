@@ -1,7 +1,8 @@
 const db = require("../database");
+const { eventQueries } = require("../queries");
 
 exports.getEvents = (req, res) => {
-  db.query("SELECT * FROM events", (err, result) => {
+  db.query(eventQueries.getAll, (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -10,7 +11,7 @@ exports.getEvents = (req, res) => {
 exports.createEvent = (req, res) => {
   const { title, description, date, time, club_id } = req.body;
   db.query(
-    "INSERT INTO events (title, description, date, time, club_id) VALUES (?, ?, ?, ?, ?)",
+    eventQueries.create,
     [title, description, date, time, club_id],
     (err, result) => {
       if (err) return res.status(500).json(err);

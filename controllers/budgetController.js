@@ -1,7 +1,8 @@
 const db = require("../database");
+const { budgetQueries } = require("../queries");
 
 exports.getBudgets = (req, res) => {
-  db.query("SELECT * FROM budgets", (err, result) => {
+  db.query(budgetQueries.getAll, (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -10,7 +11,7 @@ exports.getBudgets = (req, res) => {
 exports.createBudget = (req, res) => {
   const { event_id, allocated_amount, spent_amount, notes } = req.body;
   db.query(
-    "INSERT INTO budgets (event_id, allocated_amount, spent_amount, notes) VALUES (?, ?, ?, ?)",
+    budgetQueries.create,
     [event_id, allocated_amount, spent_amount, notes],
     (err, result) => {
       if (err) return res.status(500).json(err);

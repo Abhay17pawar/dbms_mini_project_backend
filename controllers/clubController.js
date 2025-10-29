@@ -1,7 +1,8 @@
 const db = require("../database");
+const { clubQueries } = require("../queries");
 
 exports.getClubs = (req, res) => {
-  db.query("SELECT * FROM clubs", (err, result) => {
+  db.query(clubQueries.getAll, (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -10,7 +11,7 @@ exports.getClubs = (req, res) => {
 exports.createClub = (req, res) => {
   const { name, description } = req.body;
   db.query(
-    "INSERT INTO clubs (name, description) VALUES (?, ?)",
+    clubQueries.create,
     [name, description],
     (err, result) => {
       if (err) return res.status(500).json(err);
@@ -33,15 +34,7 @@ exports.assignClubHead = (req, res) => {
     return res.status(400).json({ message: "member_id and role are required." });
   }
 
-  // This query uses INSERT...ON DUPLICATE KEY UPDATE (MySQL specific).
-  // It requires a UNIQUE constraint on (club_id, member_id) in the club_members table.
-  const query = `
-    INSERT INTO club_members (club_id, member_id, role) 
-    VALUES (?, ?, ?) 
-    ON DUPLICATE KEY UPDATE role = VALUES(role)
-  `;
-
-  db.query(query, [clubId, member_id, role], (err, result) => {
+  db.query(clubQueries.assignHead, [clubId, member_id, role], (err, result) => {
     if (err) return res.status(500).json(err);
     res.json({ message: `Role '${role}' assigned to member ${member_id} in club ${clubId}.` });
   });
@@ -52,8 +45,7 @@ exports.assignClubHead = (req, res) => {
  */
 exports.getClubHeads = (req, res) => {
   const { clubId } = req.params;
-  const query = "SELECT m.id, m.name, m.email, cm.role FROM members m JOIN club_members cm ON m.id = cm.member_id WHERE cm.club_id = ? AND cm.role LIKE '%head%'";
-  db.query(query, [clubId], (err, result) => {
+  db.query(clubQueries.getHeads, [clubId], (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -64,9 +56,7 @@ exports.getClubHeads = (req, res) => {
  */
 exports.getEventsForClub = (req, res) => {
   const { clubId } = req.params;
-  const query = "SELECT * FROM events WHERE club_id = ?";
-
-  db.query(query, [clubId], (err, result) => {
+  db.query(clubQueries.getEvents, [clubId], (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -77,16 +67,7 @@ exports.getEventsForClub = (req, res) => {
  */
 exports.getClubBudget = (req, res) => {
   const { clubId } = req.params;
-  // This query joins budgets with events to find all budget entries
-  // for events belonging to the specified club.
-  const query = `
-    SELECT b.*, e.title as event_title
-    FROM budgets b
-    JOIN events e ON b.event_id = e.id
-    WHERE e.club_id = ?
-  `;
-
-  db.query(query, [clubId], (err, result) => {
+  db.query(clubQueries.getBudget, [clubId], (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -97,9 +78,7 @@ exports.getClubBudget = (req, res) => {
  */
 exports.getActivitiesForClub = (req, res) => {
   const { clubId } = req.params;
-  const query = "SELECT * FROM activities WHERE club_id = ?";
-
-  db.query(query, [clubId], (err, result) => {
+  db.query(clubQueries.getActivities, [clubId], (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });

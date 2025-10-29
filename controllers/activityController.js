@@ -1,10 +1,11 @@
 const db = require("../database");
+const { activityQueries } = require("../queries");
 
 /**
  * Retrieves all activities (seminars and workshops).
  */
 exports.getActivities = (req, res) => {
-  db.query("SELECT * FROM activities", (err, result) => {
+  db.query(activityQueries.getAll, (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
@@ -15,14 +16,9 @@ exports.getActivities = (req, res) => {
  */
 exports.createActivity = (req, res) => {
   const { type, scope, venue, speaker, topic, activity_date, activity_time, duration, club_id } = req.body;
-  const query = `
-    INSERT INTO activities 
-    (type, scope, venue, speaker, topic, activity_date, activity_time, duration, club_id) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
   const values = [type, scope, venue, speaker, topic, activity_date, activity_time, duration, club_id];
 
-  db.query(query, values, (err, result) => {
+  db.query(activityQueries.create, values, (err, result) => {
     if (err) return res.status(500).json(err);
     res.status(201).json({ id: result.insertId, ...req.body });
   });
@@ -33,7 +29,7 @@ exports.createActivity = (req, res) => {
  */
 exports.getActivityById = (req, res) => {
   const { id } = req.params;
-  db.query("SELECT * FROM activities WHERE id = ?", [id], (err, result) => {
+  db.query(activityQueries.getById, [id], (err, result) => {
     if (err) return res.status(500).json(err);
     if (result.length === 0) {
       return res.status(404).json({ message: "Activity not found" });
@@ -48,15 +44,9 @@ exports.getActivityById = (req, res) => {
 exports.updateActivity = (req, res) => {
   const { id } = req.params;
   const { type, scope, venue, speaker, topic, activity_date, activity_time, duration, club_id } = req.body;
-  const query = `
-    UPDATE activities SET 
-    type = ?, scope = ?, venue = ?, speaker = ?, topic = ?, 
-    activity_date = ?, activity_time = ?, duration = ?, club_id = ? 
-    WHERE id = ?
-  `;
   const values = [type, scope, venue, speaker, topic, activity_date, activity_time, duration, club_id, id];
 
-  db.query(query, values, (err, result) => {
+  db.query(activityQueries.update, values, (err, result) => {
     if (err) return res.status(500).json(err);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Activity not found" });
@@ -70,7 +60,7 @@ exports.updateActivity = (req, res) => {
  */
 exports.deleteActivity = (req, res) => {
   const { id } = req.params;
-  db.query("DELETE FROM activities WHERE id = ?", [id], (err, result) => {
+  db.query(activityQueries.delete, [id], (err, result) => {
     if (err) return res.status(500).json(err);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Activity not found" });
